@@ -37,6 +37,16 @@ npm run dev   # inicia servidor (porta 3000)
 - `release.yml`: dispara em tag `v*.*.*` e cria release.
 - `codeql.yml`: análise estática de segurança semanal e em PRs.
 
+### Revisão obrigatória (gate)
+
+- O job "Require at least 1 approval" roda em PRs e em eventos de review.
+- Para bloquear merges sem revisão, ative a proteção de branch em Settings → Branches → Protect `main` e marque:
+  - Require a pull request before merging
+  - Require approvals (≥ 1)
+  - Require status checks to pass e selecione:
+    - CI / Lint, Test and Build (todas as variações de Node)
+    - CI / Require at least 1 approval
+
 Se este projeto estiver em subdiretório (monorepo), mantenha os `working-directory` conforme já configurado. Se virar raiz do repo, remova `working-directory` e ajuste caminhos para `.`.
 
 ## Governança e Segurança

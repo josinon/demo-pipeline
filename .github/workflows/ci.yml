@@ -5,30 +5,67 @@ on:
     branches: [ "**" ]
   pull_request:
     branches: [ "**" ]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
 
 jobs:
   build-test:
+    name: Lint, Test and Build (Node ${{ matrix.node-version }})
+    if: github.event_name != 'pull_request_review'
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [18.x, 20.x]
-    defaults:
-      run:
-        working-directory: infra/git/demo-github-app
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-          cache-dependency-path: infra/git/demo-github-app/package-lock.json
-      - run: npm ci
-      - run: npm run lint
-      - run: npm test
-      - run: npm run build
-      - uses: actions/upload-artifact@v4
+      - name: Install dependencies (ci if lockfile exists)
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm i; fi
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: npm test
+      - name: Build
+        run: npm run build
+      - name: Upload dist artifact
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: dist-${{ matrix.node-version }}
-          path: infra/git/demo-github-app/dist
+          path: dist
 
-# OBS: Se você usar este demo como repositório raiz, remova o working-directory e ajuste os paths para ".".
+  require-approval:
+    name: Require at least 1 approval
+    if: |
+      github.event_name == 'pull_request' || github.event_name == 'pull_request_review'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check approvals via API
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request?.number;
+            if (!prNumber) {
+              core.setFailed('No pull_request in event payload.');
+              return;
+            }
+            const reviews = await github.paginate(github.rest.pulls.listReviews, {
+              owner,
+              repo,
+              pull_number: prNumber,
+              per_page: 100,
+            });
+            const latestByUser = new Map();
+            for (const r of reviews) {
+              latestByUser.set(r.user?.login, r.state);
+            }
+            const approvedUsers = [...latestByUser.values()].filter(s => s === 'APPROVED').length;
+            core.info(`Approvals: ${approvedUsers}`);
+            if (approvedUsers < 1) {
+              core.setFailed('Este PR requer pelo menos 1 aprovação.');
+            }

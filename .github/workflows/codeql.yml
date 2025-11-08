@@ -15,9 +15,6 @@ jobs:
       contents: read
       security-events: write
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: infra/git/demo-github-app
     steps:
       - uses: actions/checkout@v4
       - name: Initialize CodeQL
