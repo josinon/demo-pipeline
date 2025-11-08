@@ -36,6 +36,10 @@ npm run dev   # inicia servidor (porta 3000)
   - Steps: install → lint → test → build → artefato `dist/`
 - `release.yml`: dispara em tag `v*.*.*` e cria release.
 - `codeql.yml`: análise estática de segurança semanal e em PRs.
+- `ai-review.yml`: (opcional) revisão automatizada por LLM.
+  - Dispara em PRs (opened, synchronize, reopened)
+  - Gera análise do diff via OpenAI e comenta no PR
+  - Requer secrets: `OPENAI_API_KEY` (obrigatório), `OPENAI_MODEL` (opcional, default: gpt-4o-mini)
 
 ### Revisão obrigatória (gate)
 
@@ -56,6 +60,18 @@ Se este projeto estiver em subdiretório (monorepo), mantenha os `working-direct
 - `dependabot.yml`: atualizações semanais de dependências.
 - `SECURITY.md`: política de reporte.
 - CodeQL + (opcional) secret scanning e branch protection.
+
+### Como ativar AI Code Review
+
+1. Vá em Settings → Secrets and variables → Actions
+2. Crie um **Secret** chamado `OPENAI_API_KEY` com sua chave da OpenAI
+3. (Opcional) Crie uma **Variable** chamada `OPENAI_MODEL` com o modelo desejado (ex: `gpt-4o`, `gpt-4o-mini`)
+4. Garanta que em Settings → Actions → General → Workflow permissions está marcado "Read and write permissions"
+5. Abra ou atualize um PR — o workflow `ai-review.yml` rodará e comentará automaticamente
+
+**Observações:**
+- Se o PR vier de fork, secrets não são expostos por segurança (o job será pulado).
+- O comentário é atualizado a cada novo push no PR (identificado por marcador HTML).
 
 ## Próximos Passos Sugeridos
 
