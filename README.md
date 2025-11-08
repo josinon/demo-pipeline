@@ -1,7 +1,7 @@
 # Demo GitHub App (Node.js + Express)
 
 Pequeno serviço para demonstrar Pull Requests, GitHub Actions (CI/CD), releases versionadas, governança e segurança.
-
+TESTE
 ## Endpoints
 
 - `GET /health` → `{ "status": "ok" }`
